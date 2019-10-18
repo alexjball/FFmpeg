@@ -59,7 +59,6 @@
 typedef struct WebMStreamingChunkContext
 {
     const AVClass *class;
-    char *stream_url;
     char *info_url;
     ff_const59 AVOutputFormat *oformat;
     AVFormatContext *avf;
@@ -132,13 +131,7 @@ static int webm_chunk_write_header(AVFormatContext *s)
     int ret;
     int i;
 
-    if (!wc->stream_url)
-    {
-        av_log(oc, AV_LOG_ERROR, "No output stream URL (-stream_url) provided\n");
-        return AVERROR(EINVAL);
-    }
-
-    wc->oformat = av_guess_format("webm", s->url, "video/webm");
+    wc->oformat = av_guess_format("webm", NULL, "video/webm");
     if (!wc->oformat)
         return AVERROR_MUXER_NOT_FOUND;
 
@@ -150,7 +143,7 @@ static int webm_chunk_write_header(AVFormatContext *s)
     oc = wc->avf;
 
     // Initialize WebM Muxer IO using the top-level format context
-    ff_format_set_url(oc, av_strdup(wc->stream_url));
+    ff_format_set_url(oc, av_strdup(s->url));
     ret = s->io_open(s, &oc->pb, oc->url, AVIO_FLAG_WRITE, NULL);
     if (ret < 0)
         return ret;
@@ -257,7 +250,6 @@ static int webm_chunk_write_trailer(AVFormatContext *s)
 
 #define OFFSET(x) offsetof(WebMStreamingChunkContext, x)
 static const AVOption options[] = {
-    {"stream_url", "output url for WebM media stream", OFFSET(stream_url), AV_OPT_TYPE_STRING, {0}, 0, 0, AV_OPT_FLAG_ENCODING_PARAM},
     {"info_url", "output url for stream information", OFFSET(info_url), AV_OPT_TYPE_STRING, {0}, 0, 0, AV_OPT_FLAG_ENCODING_PARAM},
     {NULL},
 };
@@ -275,8 +267,7 @@ AVOutputFormat ff_webm_streaming_chunk_muxer = {
     .long_name = NULL_IF_CONFIG_SMALL("WebM Streaming Chunk Muxer"),
     .mime_type = "video/webm",
     .extensions = "chk",
-    .flags = AVFMT_NOFILE | AVFMT_GLOBALHEADER | AVFMT_NEEDNUMBER |
-             AVFMT_TS_NONSTRICT,
+    .flags = AVFMT_NOFILE | AVFMT_GLOBALHEADER | AVFMT_TS_NONSTRICT,
     .audio_codec = AV_CODEC_ID_OPUS,
     .video_codec = AV_CODEC_ID_VP9,
     .priv_data_size = sizeof(WebMStreamingChunkContext),
