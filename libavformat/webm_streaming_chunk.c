@@ -72,9 +72,6 @@ enum WebMStreamEvent
     WEBM_STREAM_EVENT_MEDIA_SEGMENT_START = 2
 };
 
-// TODO: make sure this is written consistently to info_stream
-// event: 1 byte
-// offset: 8 bytes, js can only handle 53 bits.
 typedef struct WebMStreamInfo
 {
     enum WebMStreamEvent event;
@@ -90,7 +87,7 @@ static void write_info(AVIOContext *info_io, WebMStreamInfo *info)
 
     char msg[1024];
     sprintf(msg, "{ \"event\": %d, \"offset\": %ld }\n", info->event, info->offset);
-    avio_put_str(info_io, msg);
+    avio_write(info_io, (const unsigned char *)msg, strlen(msg));
 
     // avio_write(info_io, info, sizeof(WebMStreamInfo));
     avio_flush(info_io);
