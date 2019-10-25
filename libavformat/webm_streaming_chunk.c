@@ -64,6 +64,7 @@ typedef struct WebMStreamingChunkContext
     AVFormatContext *avf;
     AVIOContext *info_io;
     int open_media_segment;
+    int dash;
 } WebMStreamingChunkContext;
 
 enum WebMStreamEvent
@@ -113,6 +114,8 @@ static int chunk_mux_init(AVFormatContext *s)
     *(const AVClass **)oc->priv_data = oc->oformat->priv_class;
     av_opt_set_defaults(oc->priv_data);
     av_opt_set_int(oc->priv_data, "live", 1, 0);
+    av_opt_set_int(oc->priv_data, "dash", wc->dash, 0);
+
 
     // Expose top-level streams to WebM muxer
     oc->streams = s->streams;
@@ -248,6 +251,7 @@ static int webm_chunk_write_trailer(AVFormatContext *s)
 #define OFFSET(x) offsetof(WebMStreamingChunkContext, x)
 static const AVOption options[] = {
     {"info_url", "output url for stream information", OFFSET(info_url), AV_OPT_TYPE_STRING, {0}, 0, 0, AV_OPT_FLAG_ENCODING_PARAM},
+    { "dash", "Create a WebM file conforming to WebM DASH specification", OFFSET(dash), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, AV_OPT_FLAG_ENCODING_PARAM },
     {NULL},
 };
 
